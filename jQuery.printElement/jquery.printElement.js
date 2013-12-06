@@ -1,5 +1,6 @@
-/// <reference path="http://code.jquery.com/jquery-1.4.1-vsdoc.js" />
-/*
+/** License: MIT License Url: http://www.opensource.org/licenses/mit-license.php
+*
+* Dual licensed under the MIT and GPL licenses: http://www.opensource.org/licenses/mit-license.php http://www.gnu.org/licenses/gpl.html
 * Print Element Plugin 1.2
 *
 * Copyright (c) 2010 Erik Zaadi
@@ -7,17 +8,17 @@
 * Inspired by PrintArea (http://plugins.jquery.com/project/PrintArea) and
 * http://stackoverflow.com/questions/472951/how-do-i-print-an-iframe-from-javascript-in-safari-chrome
 *
-*  Home Page : http://projects.erikzaadi/jQueryPlugins/jQuery.printElement 
+*  Home Page : http://projects.erikzaadi/jQueryPlugins/jQuery.printElement
 *  Issues (bug reporting) : http://github.com/erikzaadi/jQueryPlugins/issues/labels/printElement
-*  jQuery plugin page : http://plugins.jquery.com/project/printElement 
-*  
+*  jQuery plugin page : http://plugins.jquery.com/project/printElement
+*
 *  Thanks to David B (http://github.com/ungenio) and icgJohn (http://www.blogger.com/profile/11881116857076484100)
 *  For their great contributions!
-* 
+*
 * Dual licensed under the MIT and GPL licenses:
 *   http://www.opensource.org/licenses/mit-license.php
 *   http://www.gnu.org/licenses/gpl.html
-*   
+*
 *   Note, Iframe Printing is not supported in Opera and Chrome 3.0, a popup window will be shown instead
 */
 ; (function (window, undefined) {
@@ -28,7 +29,9 @@
         //iframe mode is not supported for opera and chrome 3.0 (it prints the entire page).
         //http://www.google.com/support/forum/p/Webmasters/thread?tid=2cb0f08dce8821c3&hl=en
         if (mainOptions["printMode"] == 'iframe') {
-            if ($.browser.opera || (/chrome/.test(navigator.userAgent.toLowerCase())))
+        	// Edited by Casey Kroll 10/14/13 to accomodate jQuery 1.9.x upgrade
+        	// to go along with Chad's change below
+            if (/*$.browser.opera || */(/chrome/.test(navigator.userAgent.toLowerCase())))
                 mainOptions["printMode"] = 'popup';
         }
         //Remove previously printed iframe if exists
@@ -63,6 +66,7 @@
         "href": '',
         "media": ''
     };
+
     function _printElement(element, opts) {
         //Create markup to be printed
         var html = _getMarkup(element, opts);
@@ -150,6 +154,10 @@
         var elementHtml = _getElementHTMLIncludingFormElements(element);
 
         var html = new Array();
+        
+        // Added by Casey Kroll 10/14/13 - seems necessary to prevent blank page printing in IE
+        html.push( "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">" );
+               	       
         html.push('<html><head><title>' + opts["pageTitle"] + '</title>');
         if (opts["overrideElementCSS"]) {
             if (opts["overrideElementCSS"].length > 0) {
@@ -169,11 +177,21 @@
                 html.push('<link type="text/css" rel="stylesheet" href="' + $(this).attr("href") + '" media="' + $(this).attr('media') + '" >');
             });
         }
+        
+        // Edited by Casey Kroll 10/14/13 to allow less to be applied on IE
+        if (opts["overrideElementLess"] && opts["overrideElementLess"].length > 0){
+        	 html.push('<link rel="stylesheet/less" type="text/css" media="all" href="'+ opts["overrideElementLess"] +'">');
+        }        
+        if (opts["overrideElementScript"] && opts["overrideElementScript"].length > 0){
+        	html.push('<script type="text/javascript" src="'+ opts["overrideElementScript"] +'"></script>');
+        }
+        
         //Ensure that relative links work
         html.push('<base href="' + _getBaseHref() + '" />');
         html.push('</head><body style="' + opts["printBodyOptions"]["styleToAdd"] + '" class="' + opts["printBodyOptions"]["classNameToAdd"] + '">');
         html.push('<div class="' + $element.attr('class') + '">' + elementHtml + '</div>');
-        html.push('<script type="text/javascript">function printPage(){focus();print();' + ((!$.browser.opera && !opts["leaveOpen"] && opts["printMode"].toLowerCase() == 'popup') ? 'close();' : '') + '}</script>');
+        // Edited by Chad Schulz 02/25/13 to accomodate jQuery 1.9.x upgrade
+        html.push('<script type="text/javascript">function printPage(){focus();print();' + ((/* !$.browser.opera && */ !opts["leaveOpen"] && opts["printMode"].toLowerCase() == 'popup') ? 'close();' : '') + '}</script>');
         html.push('</body></html>');
 
         return html.join('');
